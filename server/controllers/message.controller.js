@@ -27,8 +27,29 @@ export const sendMessage = async (req, res) => {
     }
     // await conversation.save();
     // await newMessage.save();
-    await Promise.all([conversation.save(), newMessage.save()])
+    await Promise.all([conversation.save(), newMessage.save()]);
     res.status(201).send(newMessage);
+  } catch (error) {
+    console.log("Error in sendMessage controller:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getMessages = async (req, res) => {
+  try {
+    const { id: userToChatId } = req.params;
+    const senderId = req.user._id;
+    const conversation = await Conversation.findOne({
+      participants: { $all: [senderId, userToChatId] },
+    }).populate("message");
+
+    if(!conversation) {
+      return res.status(200).json([])
+    }
+
+    const messages = conversation.message
+
+    res.status(200).json(messages);
   } catch (error) {
     console.log("Error in sendMessage controller:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
